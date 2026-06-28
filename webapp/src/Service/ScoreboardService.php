@@ -576,9 +576,10 @@ class ScoreboardService
                     $timeOfLastCorrect[$variant]
                 );
             } else {
-                // TODO: Any tie breakers?
                 $scoreKey[$variant] = self::getScoringScoreKey(
                     $score[$variant],
+                    $totalTime[$variant],
+                    $timeOfLastCorrect[$variant]
                 );
             }
         }
@@ -653,12 +654,15 @@ class ScoreboardService
         return implode(',', $scoreKeyArray);
     }
 
-    public static function getScoringScoreKey(string $score): string
+    public static function getScoringScoreKey(string $score, int $totalTime, int $timeOfLastSolved): string
     {
-        // For scoring problems, we only use the score as the key (for now).
+        // For scoring problems, we use the score as the primary key.
         // We assume that the score is a valid bcmath number.
+        // Then we use the same tie-breakers as ICPC: total time penalty and time of last solved problem.
         $scoreKeyArray = [
             self::convertToScoreKeyElement($score, Order::Descending),
+            self::convertToScoreKeyElement($totalTime, Order::Ascending),
+            self::convertToScoreKeyElement($timeOfLastSolved, Order::Ascending),
         ];
         return implode(',', $scoreKeyArray);
     }
