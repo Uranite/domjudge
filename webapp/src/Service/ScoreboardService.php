@@ -518,7 +518,6 @@ class ScoreboardService
             $score[$variant] = "0";
         }
 
-        $penaltyTime      = $contest->getPenaltyTime();
         $scoreIsInSeconds = (bool)$this->config->get('score_in_seconds');
 
         // Now fetch the ScoreCache entries.
@@ -548,17 +547,20 @@ class ScoreboardService
 
                 // For pass-fail contests (and correct submissions in scoring contests), add points/time
                 if ($scoreCacheCell->getIsCorrect($isRestricted)) {
-                    $penalty = Utils::calcPenaltyTime($scoreCacheCell->getIsCorrect($isRestricted),
-                                                      $scoreCacheCell->getSubmissions($isRestricted),
-                                                      $penaltyTime, $scoreIsInSeconds);
-
                     $numPoints[$variant] += $contestProblems[$probId]->getPoints();
                     $solveTimeForProblem = Utils::scoretime(
                         (float)$scoreCacheCell->getSolveTime($isRestricted),
                         $scoreIsInSeconds
                     );
                     $timeOfLastCorrect[$variant] = max($timeOfLastCorrect[$variant], $solveTimeForProblem);
-                    $totalTime[$variant] += $solveTimeForProblem + $penalty;
+                    if ($contest->getScoreboardType() !== ScoreboardType::SCORE) {
+                        $penalty = Utils::calcPenaltyTime($scoreCacheCell->getIsCorrect($isRestricted),
+                                                          $scoreCacheCell->getSubmissions($isRestricted),
+                                                          $contest->getPenaltyTime(), $scoreIsInSeconds);
+                        $totalTime[$variant] += $solveTimeForProblem + $penalty;
+                    } else {
+                        $totalTime[$variant] += $solveTimeForProblem;
+                    }
                     $totalRuntime[$variant] += $scoreCacheCell->getRuntime($isRestricted);
                     // For pass-fail contests, also add the score here (even though it's not really used)
                     if ($contest->getScoreboardType() !== ScoreboardType::SCORE) {
@@ -576,9 +578,10 @@ class ScoreboardService
                     $timeOfLastCorrect[$variant]
                 );
             } else {
-                // TODO: Any tie breakers?
                 $scoreKey[$variant] = self::getScoringScoreKey(
                     $score[$variant],
+                    $totalTime[$variant],
+                    $timeOfLastCorrect[$variant]
                 );
             }
         }
@@ -653,12 +656,15 @@ class ScoreboardService
         return implode(',', $scoreKeyArray);
     }
 
-    public static function getScoringScoreKey(string $score): string
+    public static function getScoringScoreKey(string $score, int $totalTime, int $timeOfLastSolved): string
     {
-        // For scoring problems, we only use the score as the key (for now).
+        // For scoring problems, we use the score as the primary key.
         // We assume that the score is a valid bcmath number.
+        // Then we use the same tie-breakers as ICPC: total time penalty and time of last solved problem.
         $scoreKeyArray = [
             self::convertToScoreKeyElement($score, Order::Descending),
+            self::convertToScoreKeyElement($totalTime, Order::Ascending),
+            self::convertToScoreKeyElement($timeOfLastSolved, Order::Ascending),
         ];
         return implode(',', $scoreKeyArray);
     }
