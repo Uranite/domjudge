@@ -660,7 +660,7 @@ class ScoreboardService
     {
         // For scoring problems, we use the score as the primary key.
         // We assume that the score is a valid bcmath number.
-        // Then we use the same tie-breakers as ICPC: total time penalty and time of last solved problem.
+        // Then we use the following tie-breakers: total time and time of last solved problem.
         $scoreKeyArray = [
             self::convertToScoreKeyElement($score, Order::Descending),
             self::convertToScoreKeyElement($totalTime, Order::Ascending),
