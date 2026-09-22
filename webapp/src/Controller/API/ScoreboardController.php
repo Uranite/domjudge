@@ -188,7 +188,7 @@ class ScoreboardController extends AbstractApiController
             } else {
                 $score = new Score(
                     numSolved: $teamScore->numPoints,
-                    totalTime: $isScoring ? null : $teamScore->totalTime,
+                    totalTime: $teamScore->totalTime,
                     totalScore: $totalScore,
                 );
             }

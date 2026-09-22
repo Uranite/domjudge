@@ -5,7 +5,7 @@
     <th title="team name" scope="col" colspan="{{ teamColspan }}">team</th>
     {% if enable_ranking %}
         {% if scoringScoreboard %}
-            <th title="points" colspan="1" scope="col">score</th>
+            <th title="points / total time" colspan="{{ isMobile ? 1 : 2 }}" scope="col">score</th>
         {% else %}
             <th title="# solved / penalty time" colspan="{{ isMobile ? 1 : 2 }}" scope="col">score</th>
         {% endif %}
